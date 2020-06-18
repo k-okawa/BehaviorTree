@@ -4,13 +4,16 @@ namespace BehaviorTree {
             
         }
         
-        public override void Execute() {
-            base.Execute();
+        public override bool Execute() {
+            if (!base.Execute()) {
+                return false;
+            }
             if (_children.Count > 0) {
                 _children[_execIndex].Execute();
             } else {
                 status = Status.Failure;
             }
+            return true;
         }
         
         public override void SetResult(NodeResult result) {

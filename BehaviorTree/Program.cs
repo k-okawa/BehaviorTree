@@ -7,7 +7,7 @@ namespace BehaviorTree {
         static Random rand = new Random();
         
         static async Task Main(string[] args) {
-            await ConditionNodeTest();
+            await RepeaterTest();
         }
 
         static async Task SequenceActionTest() {
@@ -179,6 +179,35 @@ namespace BehaviorTree {
 
             int counter = 0;
             while (counter < 2) {
+                root.Update();
+                if (root.status != Status.Running) {
+                    root.ResetStatus();
+                    root.Execute();
+                    Console.WriteLine(counter);
+                    counter++;
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+        
+        static async Task RepeaterTest() {
+            BTRepeaterNode root = new BTRepeaterNode(null,3);
+            BTSelectorNode selec = new BTSelectorNode(root);
+            selec.AddNode(new BTActionNode(selec, () => {
+                Console.WriteLine("action1");
+                return ActionResult.Failure;
+            }));
+            selec.AddNode(new BTActionNode(selec, () => {
+                Console.WriteLine("action2");
+                return ActionResult.Success;
+            }));
+            root.AppendNode(selec);
+
+            root.Execute();
+
+            int counter = 0;
+            while (counter < 1) {
                 root.Update();
                 if (root.status != Status.Running) {
                     root.ResetStatus();

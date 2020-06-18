@@ -6,8 +6,10 @@ namespace BehaviorTree {
             
         }
 
-        public override void Execute() {
-            base.Execute();
+        public override bool Execute() {
+            if (!base.Execute()) {
+                return false;
+            }
             foreach (var child in _children) {
                 child.Execute();
             }
@@ -15,6 +17,7 @@ namespace BehaviorTree {
             if (_children.Count <= 0) {
                 status = Status.Failure;
             }
+            return true;
         }
 
         bool _isOnceFailure = false;

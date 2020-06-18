@@ -11,12 +11,13 @@ namespace BehaviorTree {
             parent = parentNode;
         }
 
-        public virtual void Execute() {
+        public virtual bool Execute() {
             if (status != Status.Ready) {
-                return;
+                return false;
             }
 
             status = Status.Running;
+            return true;
         }
 
         public virtual void SetResult(NodeResult result) {

@@ -1,27 +1,34 @@
-using System;
-
 namespace BehaviorTree {
-    public class BTConditionNode : BTNode {
-        Func<bool> _compareFunc;
+    public class BTRepeaterNode : BTNode {
+        int _loopCount = 0;
+        int _counter = 0;
         
-        public BTConditionNode(BTNode parentNode, Func<bool> compareFunc) : base(parentNode) {
-            _compareFunc = compareFunc;
+        public BTRepeaterNode(BTNode parentNode,int loopCount) : base(parentNode) {
+            _loopCount = loopCount;
         }
-
+        
         public override bool Execute() {
             if (!base.Execute()) {
                 return false;
             }
-
-            _children[_execIndex].Execute();
+            if (_children.Count > 0) {
+                _children[_execIndex].Execute();
+            } else {
+                status = Status.Failure;
+            }
             return true;
         }
-
+        
         public override void SetResult(NodeResult result) {
             switch (result) {
                 case NodeResult.Success:
-                    status = Status.Success;
-                    parent?.SetResult(NodeResult.Success);
+                    _counter++;
+                    _children[0].ResetStatus();
+                    _children[0].Execute();
+                    if (_counter >= _loopCount) {
+                        status = Status.Success;
+                        parent?.SetResult(NodeResult.Success);
+                    }
                     break;
                 case NodeResult.Failure:
                     status = Status.Failure;
@@ -29,21 +36,20 @@ namespace BehaviorTree {
                     break;
             }
         }
-
+        
         public override bool Update() {
             if (!base.Update()) {
                 return false;
             }
 
-            Console.WriteLine(_compareFunc().ToString());
-            if (_compareFunc()) {
-                _children[_execIndex].Update();
-            } else {
-                status = Status.Failure;
-                parent?.SetResult(NodeResult.Failure);
-            }
+            _children[_execIndex].Update();
 
             return true;
+        }
+
+        public override void ResetStatus() {
+            base.ResetStatus();
+            _counter = 0;
         }
 
         public void AppendNode(BTNode childNode) {
