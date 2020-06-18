@@ -7,7 +7,104 @@ namespace BehaviorTree {
         static Random rand = new Random();
         
         static async Task Main(string[] args) {
-            await RepeaterTest();
+            await Kadai();
+        }
+
+        static async Task Kadai() {
+            Console.WriteLine("skill1の発動確率を入力してください　例)50%の場合→50");
+            int skill1Prop = int.Parse(Console.ReadLine());
+            int ownHp = 120;
+            int enemyHp = 180;
+            
+            BTSequenceNode root = new BTSequenceNode(null);
+            
+            root.AddNode(new BTActionNode(root, () => {
+                Console.WriteLine("出発");
+                return ActionResult.Success;
+            }));
+            
+            
+            BTConditionNode ownHpCondition = new BTConditionNode(root, () => {
+                return ownHp >= 100;
+                
+            });
+            ownHpCondition.AppendNode(new BTActionNode(ownHpCondition, () => {
+                Console.WriteLine("敵に寄った");
+                return ActionResult.Success;
+            }));
+            root.AddNode(ownHpCondition);
+            
+            
+            BTParallelNode parallelNode = new BTParallelNode(root);
+            parallelNode.AddNode(new BTActionNode(parallelNode, () => {
+                Console.WriteLine("友達Aを呼んだ");
+                return ActionResult.Success;
+            }));
+            parallelNode.AddNode(new BTActionNode(parallelNode, () => {
+                Console.WriteLine("友達Bを呼んだ");
+                return ActionResult.Success;
+            }));
+            root.AddNode(parallelNode);
+            
+            
+            BTRepeaterNode rep = new BTRepeaterNode(root,3);
+            BTSelectorNode sel1 = new BTSelectorNode(rep);
+            sel1.AddNode(new BTActionNode(sel1, () => {
+                if (rand.Next(0, 101) < skill1Prop) {
+                    int prevHp = enemyHp;
+                    enemyHp -= 50;
+                    Console.WriteLine(string.Format("skill1発動　敵の体力{0}→{1}",prevHp,enemyHp));
+                    return ActionResult.Success;
+                }
+                return ActionResult.Failure;
+            }));
+            sel1.AddNode(new BTActionNode(sel1, () => {
+                int prevHp = enemyHp;
+                enemyHp -= 60;
+                Console.WriteLine(string.Format("skill2発動　敵の体力{0}→{1}", prevHp, enemyHp));
+                return ActionResult.Success;
+            }));
+            rep.AppendNode(sel1);
+            root.AddNode(rep);
+            
+            BTSelectorNode sel2 = new BTSelectorNode(root);
+            BTConditionNode enemyDeadCondition = new BTConditionNode(sel2, () => {
+                return enemyHp <= 0;
+            });
+            enemyDeadCondition.AppendNode(new BTActionNode(enemyDeadCondition, () => {
+                Console.WriteLine("End1");
+                return ActionResult.Success;
+            }));
+            sel2.AddNode(enemyDeadCondition);
+            
+            BTConditionNode enemyAliveCondition = new BTConditionNode(sel2, () => {
+                return enemyHp > 0;
+            });
+            enemyAliveCondition.AppendNode(new BTActionNode(enemyAliveCondition, () => {
+                Console.WriteLine("End2");
+                return ActionResult.Success;
+            }));
+            sel2.AddNode(enemyAliveCondition);
+            
+            root.AddNode(sel2);
+            
+            // 実行
+            root.Execute();
+            Console.WriteLine("-----------------------------------");
+
+            int counter = 0;
+            while (counter < 2) {
+                root.Update();
+                if (root.status != Status.Running) {
+                    root.ResetStatus();
+                    root.Execute();
+                    Console.WriteLine("-----------------------------------");
+                    counter++;
+                    enemyHp = 180;
+                }
+
+                await Task.Delay(1000);
+            }
         }
 
         static async Task SequenceActionTest() {

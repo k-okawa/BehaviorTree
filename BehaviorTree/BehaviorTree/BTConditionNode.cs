@@ -34,8 +34,7 @@ namespace BehaviorTree {
             if (!base.Update()) {
                 return false;
             }
-
-            Console.WriteLine(_compareFunc().ToString());
+            
             if (_compareFunc()) {
                 _children[_execIndex].Update();
             } else {
