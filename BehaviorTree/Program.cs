@@ -6,7 +6,7 @@ namespace BehaviorTree {
         static Random rand = new Random();
         
         static async Task Main(string[] args) {
-            await SelectorActionTest();
+            await ParallelActionTest();
         }
 
         static async Task SequenceActionTest() {
@@ -104,6 +104,39 @@ namespace BehaviorTree {
             
             root.Execute();
 
+            int counter = 0;
+            while (counter < 2) {
+                root.Update();
+                if (root.status != Status.Running) {
+                    counter++;
+                    root.ResetStatus();
+                    root.Execute();
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+        
+        static async Task ParallelActionTest() {
+            BTParallelNode root = new BTParallelNode(null);
+            root.AddNode(new BTActionNode(root, () => {
+                Console.WriteLine("para action1");
+                return ActionResult.Success;
+            }));
+            int writeCount = 0;
+            root.AddNode(new BTActionNode(root, () => {
+                Console.WriteLine("para action2");
+                writeCount++;
+                if (writeCount > 3) {
+                    return ActionResult.Success;
+                }
+                return ActionResult.Running;
+            }));
+            root.AddNode(new BTActionNode(root, () => {
+                Console.WriteLine("para action3");
+                return ActionResult.Success;
+            }));
+            
             int counter = 0;
             while (counter < 2) {
                 root.Update();

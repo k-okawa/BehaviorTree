@@ -31,7 +31,7 @@ namespace BehaviorTree {
             return true;
         }
 
-        public void ResetStatus() {
+        public virtual void ResetStatus() {
             status = Status.Ready;
             _execIndex = 0;
             foreach (var child in _children) {
