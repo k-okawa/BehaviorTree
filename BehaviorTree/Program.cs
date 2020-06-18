@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace BehaviorTree {
@@ -6,7 +7,7 @@ namespace BehaviorTree {
         static Random rand = new Random();
         
         static async Task Main(string[] args) {
-            await ParallelActionTest();
+            await ConditionNodeTest();
         }
 
         static async Task SequenceActionTest() {
@@ -56,6 +57,7 @@ namespace BehaviorTree {
                 if (root.status != Status.Running) {
                     root.ResetStatus();
                     root.Execute();
+                    Console.WriteLine(counter);
                     counter++;
                 }
 
@@ -108,6 +110,7 @@ namespace BehaviorTree {
             while (counter < 2) {
                 root.Update();
                 if (root.status != Status.Running) {
+                    Console.WriteLine(counter);
                     counter++;
                     root.ResetStatus();
                     root.Execute();
@@ -137,13 +140,51 @@ namespace BehaviorTree {
                 return ActionResult.Success;
             }));
             
+            root.Execute();
+            
             int counter = 0;
             while (counter < 2) {
                 root.Update();
                 if (root.status != Status.Running) {
+                    Console.WriteLine(counter);
                     counter++;
                     root.ResetStatus();
                     root.Execute();
+                    writeCount = 0;
+                }
+
+                await Task.Delay(1000);
+            }
+        }
+        
+        static async Task ConditionNodeTest() {
+            int hp = 110;
+            
+            BTSelectorNode root = new BTSelectorNode(null);
+            BTConditionNode condition = new BTConditionNode(root, () => {
+                return hp > 100;
+            });
+            condition.AppendNode(new BTActionNode(condition, () => {
+                Console.WriteLine("condition through");
+                return ActionResult.Success;
+                
+            }));
+            root.AddNode(condition);
+            root.AddNode(new BTActionNode(root, () => {
+                Console.WriteLine("action2");
+                return ActionResult.Success;
+            }));
+            
+            root.Execute();
+
+            int counter = 0;
+            while (counter < 2) {
+                root.Update();
+                if (root.status != Status.Running) {
+                    root.ResetStatus();
+                    root.Execute();
+                    Console.WriteLine(counter);
+                    counter++;
                 }
 
                 await Task.Delay(1000);
